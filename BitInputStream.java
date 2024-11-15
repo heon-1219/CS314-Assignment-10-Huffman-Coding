@@ -37,7 +37,7 @@ public class BitInputStream extends InputStream {
         0x7fffff,0xffffff,0x1ffffff,0x3ffffff,0x7ffffff,
         0xfffffff,0x1fffffff,0x3fffffff,0x7fffffff,0xffffffff
     };
-
+    // this is a test
     private static final int BITS_PER_BYTE = 8;
     
     /**
