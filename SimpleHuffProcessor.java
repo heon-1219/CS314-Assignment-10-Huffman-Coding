@@ -1,6 +1,6 @@
 /*  Student information for assignment:
  *
- *  On our honor, <NAME1> and Seheon (David) Chang, this programming assignment is our own work
+ *  On our honor, Vihaan Mehta and Seheon (David) Chang, this programming assignment is our own work
  *  and we have not provided this code to any other student.
  *
  *  Number of slip days used: 0
