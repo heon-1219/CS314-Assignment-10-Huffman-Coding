@@ -21,11 +21,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.PriorityQueue;
+
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
+    private PriorityQueue314<TreeNode> frequencyQueue;
+    private HuffmanTree<TreeNode> huffmanTree;
+
+    public SimpleHuffProcessor() {
+        frequencyQueue = new PriorityQueue314<>();
+        huffmanTree = new HuffmanTree<>();
+    }
 
     /**
      * Preprocess data so that compression is possible ---
@@ -50,10 +57,14 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         BitInputStream bits = new BitInputStream(in);
         int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
-
+        if (headerFormat != IHuffConstants.STORE_COUNTS) {
+            System.out.println("Invalid header format");
+            return -1;
+        }
         // freqMap = (actual number, frequency)
         Map<Integer, Integer> freqMap = new HashMap<>();
-        PriorityQueue<TreeNode> pq = new PriorityQueue<>();
+        // From lecture - see if this is possible without a map
+
 
         while ((inbits != -1)) {
             if (!freqMap.containsKey(inbits)) {
@@ -69,10 +80,18 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         for (Map.Entry<Integer, Integer> entry : freqMap.entrySet()) {
             Integer key = entry.getKey();
             Integer value = entry.getValue();
-            pq.add(new TreeNode(key, value));
+            frequencyQueue.enqueue(new TreeNode(key, value));
             System.out.println("Chunk: " + key + ", Frequency: " + value);
         }
-        System.out.println(pq);
+        // Adding PEOF value
+        frequencyQueue.enqueue(new TreeNode(256, 1));
+        System.out.println("Frequency Queue: " + frequencyQueue);
+
+        // Generate huffman tree
+        huffmanTree = new HuffmanTree<>(frequencyQueue);
+
+
+
         showString("Not working yet");
         myViewer.update("Still not working");
         throw new IOException("preprocess not implemented");

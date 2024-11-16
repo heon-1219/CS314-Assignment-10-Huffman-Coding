@@ -1,10 +1,11 @@
 
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class PriorityQueue314<E extends Comparable<? super E>> {
+public class PriorityQueue314<E extends Comparable<? super E>>  {
 
     private LinkedList<E> list;
     private int size;
@@ -19,7 +20,8 @@ public class PriorityQueue314<E extends Comparable<? super E>> {
             throw new NullPointerException();
         }
         list.add(e);
-        Collections.sort(list);
+        list.sort(new PriorityQueue314Comparator());
+
     }
 
     public E poll() {
@@ -27,7 +29,9 @@ public class PriorityQueue314<E extends Comparable<? super E>> {
             return null;
         }
         E data = list.remove(0);
-        Collections.sort(list);
+
+        list.sort(new PriorityQueue314Comparator());
+
         return data;
     }
 
@@ -58,4 +62,18 @@ public class PriorityQueue314<E extends Comparable<? super E>> {
     public String toString() {
         return list.toString();
     }
+
+
+private class PriorityQueue314Comparator implements Comparator<E> {
+
+    @Override
+    public int compare(E o1, E o2) {
+        int compare = o1.compareTo(o2);
+        if (compare != 0) {
+            return compare;
+        }
+        return -1;
+    }
+}
+
 }
