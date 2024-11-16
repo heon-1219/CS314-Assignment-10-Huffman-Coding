@@ -54,9 +54,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         Map<Integer, Integer> freqMap = new HashMap<>();
 
         while ((inbits != -1)) {
-            if (!freqMap.keySet().contains(inbits)) {
+            if (!freqMap.containsKey(inbits)) {
                 freqMap.put(inbits, 1);
             } else {
+
                 freqMap.put(inbits, freqMap.get(inbits) + 1);
             }
 
