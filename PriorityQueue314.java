@@ -20,8 +20,7 @@ public class PriorityQueue314<E extends Comparable<? super E>>  {
             throw new NullPointerException();
         }
         list.add(e);
-        list.sort(new PriorityQueue314Comparator());
-
+        Collections.sort(list);
     }
 
     public E poll() {
@@ -30,7 +29,7 @@ public class PriorityQueue314<E extends Comparable<? super E>>  {
         }
         E data = list.remove(0);
 
-        list.sort(new PriorityQueue314Comparator());
+        Collections.sort(list);
 
         return data;
     }
@@ -64,16 +63,16 @@ public class PriorityQueue314<E extends Comparable<? super E>>  {
     }
 
 
-private class PriorityQueue314Comparator implements Comparator<E> {
+/*private class PriorityQueue314Comparator implements Comparator<E> {
 
     @Override
     public int compare(E o1, E o2) {
         int compare = o1.compareTo(o2);
-        if (compare != 0) {
+       // if (compare != 0) {
             return compare;
-        }
-        return -1;
+       // }
+       // return 1;
     }
 }
-
+*/
 }

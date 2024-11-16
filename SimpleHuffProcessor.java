@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.TreeMap;
 
 
 public class SimpleHuffProcessor implements IHuffProcessor {
@@ -62,7 +63,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             return -1;
         }
         // freqMap = (actual number, frequency)
-        Map<Integer, Integer> freqMap = new HashMap<>();
+        Map<Integer, Integer> freqMap = new TreeMap<>();
         // From lecture - see if this is possible without a map
 
 
