@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.PriorityQueue;
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
@@ -52,12 +53,12 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         // freqMap = (actual number, frequency)
         Map<Integer, Integer> freqMap = new HashMap<>();
+        PriorityQueue<TreeNode> pq = new PriorityQueue<>();
 
         while ((inbits != -1)) {
             if (!freqMap.containsKey(inbits)) {
                 freqMap.put(inbits, 1);
             } else {
-
                 freqMap.put(inbits, freqMap.get(inbits) + 1);
             }
 
@@ -68,9 +69,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         for (Map.Entry<Integer, Integer> entry : freqMap.entrySet()) {
             Integer key = entry.getKey();
             Integer value = entry.getValue();
+            pq.add(new TreeNode(key, value));
             System.out.println("Chunk: " + key + ", Frequency: " + value);
         }
-
+        System.out.println(pq);
         showString("Not working yet");
         myViewer.update("Still not working");
         throw new IOException("preprocess not implemented");

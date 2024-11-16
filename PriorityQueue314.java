@@ -53,4 +53,9 @@ public class PriorityQueue314<E extends Comparable<? super E>> {
     public boolean isEmpty() {
         return list.isEmpty();
     }
+
+    @Override
+    public String toString() {
+        return list.toString();
+    }
 }
