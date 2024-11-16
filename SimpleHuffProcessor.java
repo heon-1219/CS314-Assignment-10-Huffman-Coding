@@ -19,6 +19,8 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
+import java.util.HashMap;
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
@@ -45,6 +47,29 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
+        BitInputStream bits = new BitInputStream(in);
+        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+
+        // freqMap = (actual number, frequency)
+        Map<Integer, Integer> freqMap = new HashMap<>();
+
+        while ((inbits != -1)) {
+            if (!freqMap.keySet().contains(inbits)) {
+                freqMap.put(inbits, 1);
+            } else {
+                freqMap.put(inbits, freqMap.get(inbits) + 1);
+            }
+
+            System.out.println(inbits);
+            inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+        }
+
+        for (Map.Entry<Integer, Integer> entry : freqMap.entrySet()) {
+            Integer key = entry.getKey();
+            Integer value = entry.getValue();
+            System.out.println("Chunk: " + key + ", Frequency: " + value);
+        }
+
         showString("Not working yet");
         myViewer.update("Still not working");
         throw new IOException("preprocess not implemented");
