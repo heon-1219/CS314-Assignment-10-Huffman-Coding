@@ -24,8 +24,9 @@ public class PriorityQueue314<E extends Comparable<? super E>>  {
         if (list.isEmpty()) {
             return null;
         }
+        E data = list.remove(0);
         Collections.sort(list);
-        return list.remove(0);
+        return data;
     }
 
     public int size() {
