@@ -7,6 +7,7 @@ public class HuffmanTree<E extends Comparable<? super E>>
     private TreeNode root;
     private Map<Integer, String> huffManCodes;
     private Map<Integer, Integer> getFreqPerCode;
+    private int sum;
     // Check with TAs if this has to be generic or not
     public HuffmanTree(PriorityQueue314<TreeNode> pq) {
         this();
@@ -33,7 +34,9 @@ public class HuffmanTree<E extends Comparable<? super E>>
             huffManCodes.put(value, getCode(value));
         }
 
-
+        for (Integer value : huffManCodes.keySet()) {
+            sum += huffManCodes.get(value).length() * getFreqPerCode.get(value);
+        }
     }
 
     private String getCode(int value) {
@@ -44,7 +47,7 @@ public class HuffmanTree<E extends Comparable<? super E>>
     }
 
     public int getSumOfAllCodes() {
-        return 0;
+        return sum;
     }
 
     private int getCodeHelper(int value, TreeNode node, StringBuilder code) {
