@@ -90,6 +90,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         // Generate huffman tree
         huffmanTree = new HuffmanTree<>(frequencyQueue);
+        System.out.println("codes: " + huffmanTree.getHuffManCodes());
 
 
 
