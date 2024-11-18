@@ -38,7 +38,8 @@ public class HuffmanTree<E extends Comparable<? super E>>
         }
 
         for (Integer value : huffManCodes.keySet()) {
-            sum += /*huffManCodes.get(value).length()*/32 * getFreqPerCode.get(value);
+            System.out.println("Code: " + huffManCodes.get(value) + " Frequency: " + getFreqPerCode.get(value));
+            sum += huffManCodes.get(value).length() * getFreqPerCode.get(value);
         }
     }
 
