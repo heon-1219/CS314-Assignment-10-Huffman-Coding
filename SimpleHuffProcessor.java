@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 
-
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
@@ -41,10 +40,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * 
      * @param in           is the stream which could be subsequently compressed
      * @param headerFormat a constant from IHuffProcessor that determines what kind
-     *                     of
-     *                     header to use, standard count format, standard tree
-     *                     format, or
-     *                     possibly some format added in the future.
+     *                     of header to use, standard count format, standard tree
+     *                     format, or possibly some format added in the future.
      * @return number of bits saved by compression or some other measure
      *         Note, to determine the number of
      *         bits saved, the number of bits written includes
@@ -56,6 +53,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         BitInputStream bits = new BitInputStream(in);
         int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+        // total - magic - headerFormat - header - totalCompressedinHuffman
+        int[] freq = new int[257]; // 0~255 + 256(Pseudo-EOF)
+        int numBits = 0;
 
         // Also make sure that it is equal to the magic number
         if ((headerFormat != IHuffConstants.STORE_COUNTS &&
@@ -65,30 +65,21 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     + "did not start with magic huff number.");
             return -1;
         }
-        ArrayList<Integer> inbitsArray = new ArrayList<>();
-        int numBits = 0;
 
         while (inbits != -1) {
-            inbitsArray.add(inbits);
+            freq[inbits]++;
             inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
             System.out.println(inbits);
             numBits += IHuffConstants.BITS_PER_WORD;
         }
-        Collections.sort(inbitsArray);
-        int padding = Integer.MIN_VALUE;
-        inbitsArray.add(padding);
 
-        int currentBitString = inbitsArray.get(0);
-        int frequency = 0;
-        for (int bitString : inbitsArray) {
-            if (currentBitString != bitString) {
-                frequencyQueue.enqueue(new TreeNode(currentBitString, frequency));
-                frequency = 0;
-                currentBitString = bitString;
+        for (int i = 0; i < freq.length; i++) {
+            if (freq[i] > 0) {
+                frequencyQueue.enqueue(new TreeNode(i, freq[i]));
             }
-            frequency++;
-            System.out.println("Chunk: " + (char) bitString + ", Frequency: " + frequency);
+            System.out.println("Chunk: " + i + ", Freq: " + freq[i]);
         }
+
         // Adding PEOF value
         frequencyQueue.enqueue(new TreeNode(256, 1));
         System.out.println("Frequency Queue: " + frequencyQueue);
@@ -97,13 +88,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         huffmanTree = new HuffmanTree<>(frequencyQueue);
         System.out.println("codes: " + huffmanTree.getHuffManCodes());
 
-        int headerInfo = 96;
+        int headerInfo = IHuffConstants.BITS_PER_INT * 3;
         // Number of bits in file minus 32 for magic number, minus 32 for STORE_COUNTS/
-        // STORE_TREE constant, then subtract the amount of bits in compressed file, then
-        // subtract header for compressed file (32 bits)
+        // STORE_TREE constant, then subtract the amount of bits in compressed file,
+        // then subtract header for compressed file (32 bits)
         System.out.println(numBits);
-        System.out.println(huffmanTree.getSumOfAllCodes());
-        return numBits - (headerInfo + huffmanTree.getSumOfAllCodes());
+        System.out.println(numBits - (headerInfo + huffmanTree.getSumOfAllCodes())); // huffmanTree.getSumOfAllCodes());
+        return 0;
 
         // showString("Not working yet");
         // myViewer.update("Still not working");
@@ -112,7 +103,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     /**
      * Compresses input to output, where the same InputStream has
-     * previously been pre-processed via <code>preprocessCompress</code>
+     * previously been pre-processed via <code>pxreprocessCompress</code>
      * storing state used by this call.
      * <br>
      * pre: <code>preprocessCompress</code> must be called before this method
@@ -132,7 +123,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         int bitsWritten = 0;
 
-
         throw new IOException("compress is not implemented");
         // return 0;
     }
@@ -148,7 +138,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      *                     writing to the output file.
      */
     public int uncompress(InputStream in, OutputStream out) throws IOException {
-
 
         throw new IOException("uncompress not implemented");
         // return 0;
@@ -177,15 +166,12 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         public boolean equals(Object o) {
             if (this == o) {
                 return true;
-            }
-            else if (!(o instanceof Tuple)) {
+            } else if (!(o instanceof Tuple)) {
                 return false;
             }
             Tuple tuple = (Tuple) o;
             return code == tuple.code;
         }
-
-
 
         @Override
         public int compareTo(Tuple o) {
