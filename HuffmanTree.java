@@ -1,6 +1,9 @@
 
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class HuffmanTree<E extends Comparable<? super E>>
 {
@@ -35,7 +38,7 @@ public class HuffmanTree<E extends Comparable<? super E>>
         }
 
         for (Integer value : huffManCodes.keySet()) {
-            sum += huffManCodes.get(value).length() * getFreqPerCode.get(value);
+            sum += /*huffManCodes.get(value).length()*/32 * getFreqPerCode.get(value);
         }
     }
 

@@ -19,9 +19,7 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.TreeMap;
+import java.util.*;
 
 
 public class SimpleHuffProcessor implements IHuffProcessor {
@@ -58,31 +56,38 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         BitInputStream bits = new BitInputStream(in);
         int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
-        if (headerFormat != IHuffConstants.STORE_COUNTS) {
+
+        // Also make sure that it is equal to the magic number
+        if ((headerFormat != IHuffConstants.STORE_COUNTS &&
+                headerFormat != IHuffConstants.STORE_TREE) || inbits == -1) {
             System.out.println("Invalid header format");
+            myViewer.showError("Error reading compressed file, "
+                    + "did not start with magic huff number.");
             return -1;
         }
-        // freqMap = (actual number, frequency)
-        Map<Integer, Integer> freqMap = new TreeMap<>();
-        // From lecture - see if this is possible without a map
+        ArrayList<Integer> inbitsArray = new ArrayList<>();
+        int numBits = 0;
 
-
-        while ((inbits != -1)) {
-            if (!freqMap.containsKey(inbits)) {
-                freqMap.put(inbits, 1);
-            } else {
-                freqMap.put(inbits, freqMap.get(inbits) + 1);
-            }
-
-            System.out.println(inbits);
+        while (inbits != -1) {
+            inbitsArray.add(inbits);
             inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+            System.out.println(inbits);
+            numBits += IHuffConstants.BITS_PER_WORD;
         }
+        Collections.sort(inbitsArray);
+        int padding = Integer.MIN_VALUE;
+        inbitsArray.add(padding);
 
-        for (Map.Entry<Integer, Integer> entry : freqMap.entrySet()) {
-            Integer key = entry.getKey();
-            Integer value = entry.getValue();
-            frequencyQueue.enqueue(new TreeNode(key, value));
-            System.out.println("Chunk: " + key + ", Frequency: " + value);
+        int currentBitString = inbitsArray.get(0);
+        int frequency = 0;
+        for (int bitString : inbitsArray) {
+            if (currentBitString != bitString) {
+                frequencyQueue.enqueue(new TreeNode(currentBitString, frequency));
+                frequency = 0;
+                currentBitString = bitString;
+            }
+            frequency++;
+            System.out.println("Chunk: " + (char) bitString + ", Frequency: " + frequency);
         }
         // Adding PEOF value
         frequencyQueue.enqueue(new TreeNode(256, 1));
@@ -92,13 +97,17 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         huffmanTree = new HuffmanTree<>(frequencyQueue);
         System.out.println("codes: " + huffmanTree.getHuffManCodes());
 
+        int headerInfo = 96;
+        // Number of bits in file minus 32 for magic number, minus 32 for STORE_COUNTS/
+        // STORE_TREE constant, then subtract the amount of bits in compressed file, then
+        // subtract header for compressed file (32 bits)
+        System.out.println(numBits);
+        System.out.println(huffmanTree.getSumOfAllCodes());
+        return numBits - (headerInfo + huffmanTree.getSumOfAllCodes());
 
-
-        showString("Not working yet");
-        myViewer.update("Still not working");
-        throw new IOException("preprocess not implemented");
-
-        // return 0;
+        // showString("Not working yet");
+        // myViewer.update("Still not working");
+        // throw new IOException("preprocess not implemented");
     }
 
     /**
@@ -120,6 +129,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      *                     writing to the output file.
      */
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
+
+        int bitsWritten = 0;
+
+
         throw new IOException("compress is not implemented");
         // return 0;
     }
@@ -148,6 +161,35 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private void showString(String s) {
         if (myViewer != null) {
             myViewer.update(s);
+        }
+    }
+
+    private static class Tuple implements Comparable<Tuple> {
+        private int code;
+        private int frequency;
+
+        public Tuple(int code, int frequency) {
+            this.code = code;
+            this.frequency = frequency;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            else if (!(o instanceof Tuple)) {
+                return false;
+            }
+            Tuple tuple = (Tuple) o;
+            return code == tuple.code;
+        }
+
+
+
+        @Override
+        public int compareTo(Tuple o) {
+            return frequency - o.frequency;
         }
     }
 }
