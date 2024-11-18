@@ -54,8 +54,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         BitInputStream bits = new BitInputStream(in);
         int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
         // total - magic - headerFormat - header - totalCompressedinHuffman
-        int[] freq = new int[257]; // 0~255 + 256(Pseudo-EOF)
-        int numBits = 0;
 
         // Also make sure that it is equal to the magic number
         if ((headerFormat != IHuffConstants.STORE_COUNTS &&
@@ -66,6 +64,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             return -1;
         }
 
+        int[] freq = new int[IHuffConstants.ALPH_SIZE]; // 0~255 + 256(Pseudo-EOF)
+        int numBits = 0;
         while (inbits != -1) {
             freq[inbits]++;
             inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
@@ -87,8 +87,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // Generate huffman tree
         huffmanTree = new HuffmanTree<>(frequencyQueue);
         System.out.println("codes: " + huffmanTree.getHuffManCodes());
+        int headerInfo = IHuffConstants.BITS_PER_INT * 2 + 8192;
 
-        int headerInfo = IHuffConstants.BITS_PER_INT * 3;
         // Number of bits in file minus 32 for magic number, minus 32 for STORE_COUNTS/
         // STORE_TREE constant, then subtract the amount of bits in compressed file,
         // then subtract header for compressed file (32 bits)
