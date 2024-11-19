@@ -81,7 +81,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
 
         // Adding PEOF value
-        frequencyQueue.enqueue(new TreeNode(256, 1));
+        frequencyQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
         System.out.println("Frequency Queue: " + frequencyQueue);
 
         // Generate huffman tree
