@@ -1,21 +1,21 @@
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class HuffmanTree<E extends Comparable<? super E>>
-{
+public class HuffmanTree<E extends Comparable<? super E>> {
     private TreeNode root;
     private Map<Integer, String> huffManCodes;
     private Map<Integer, Integer> getFreqPerCode;
     private int sum;
-    // Check with TAs if this has to be generic or not
+
+    // TODO Check with TAs if this has to be generic or not
+    // Is this still needed to be asked? @mehtavihaanj
     public HuffmanTree(PriorityQueue314<TreeNode> pq) {
         this();
         ArrayList<Integer> list = new ArrayList<>();
-        Iterator<TreeNode> it  = pq.iterator();
+        Iterator<TreeNode> it = pq.iterator();
 
         while (it.hasNext()) {
             TreeNode temp = it.next();
@@ -30,9 +30,9 @@ public class HuffmanTree<E extends Comparable<? super E>>
         }
         root = pq.poll();
 
-        //System.out.println("DATA: " + root.getRight().getLeft().getValue());
-        //Collections.sort(list);
-        //System.out.println(list);
+        // System.out.println("DATA: " + root.getRight().getLeft().getValue());
+        // Collections.sort(list);
+        // System.out.println(list);
         for (Integer value : list) {
             huffManCodes.put(value, getCode(value));
         }
@@ -69,8 +69,7 @@ public class HuffmanTree<E extends Comparable<? super E>>
                 return rightResult;
             }
             code.replace(code.length() - 1, code.length(), "");
-        }
-        else if (node != null && node.getValue() == value) {
+        } else if (node != null && node.getValue() == value) {
             return value;
         }
         return -1;
@@ -83,5 +82,26 @@ public class HuffmanTree<E extends Comparable<? super E>>
 
     public HashMap<Integer, String> getHuffManCodes() {
         return (HashMap<Integer, String>) huffManCodes;
+    }
+
+    // for STF
+    public String treeHeader() {
+        StringBuilder header = new StringBuilder();
+
+        for (Map.Entry<Integer, String> entry : huffManCodes.entrySet()) {
+            String huffCode = entry.getValue();
+            header.append(huffCode);
+
+            int character = entry.getKey();
+            StringBuilder binary = new StringBuilder();
+            while (character > 0) {
+                int remainder = character % 2;
+                binary.insert(0, remainder);
+                character = character / 2;
+            }
+            header.append(binary);
+        }
+
+        return header.toString();
     }
 }

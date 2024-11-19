@@ -28,6 +28,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private HuffmanTree<TreeNode> compressionHuffTree;
     private Map<Integer, String> compressionHuffMap;
     private int[] freq;
+
     public SimpleHuffProcessor() {
         frequencyQueue = new PriorityQueue314<>();
         compressionHuffTree = new HuffmanTree<>();
@@ -67,7 +68,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             return -1;
         }
 
-         // 0~255 + 256(Pseudo-EOF)
+        // 0~255 + 256(Pseudo-EOF)
         int numBits = 0;
         while (inbits != -1) {
             freq[inbits]++;
@@ -92,7 +93,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         compressionHuffMap = compressionHuffTree.getHuffManCodes();
 
         System.out.println("codes: " + compressionHuffTree.getHuffManCodes());
-        int headerInfo = IHuffConstants.BITS_PER_INT * 2 + 8192;
+        // TODO
+        String STF = compressionHuffTree.treeHeader();
+        System.out.println(STF);
+        int headerInfo = BITS_PER_INT * 2 + (ALPH_SIZE * BITS_PER_INT);
 
         // Number of bits in file minus 32 for magic number, minus 32 for STORE_COUNTS/
         // STORE_TREE constant, then subtract the amount of bits in compressed file,
@@ -123,7 +127,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
 
         int bitsWritten = 0;
-        // Write magic number, SCF/STF constant, header data to rebuild tree, compressed data,
+        // Write magic number, SCF/STF constant, header data to rebuild tree, compressed
+        // data,
         // and PEOF value
         BitOutputStream outBits = new BitOutputStream(out);
         BitInputStream inBitStream = new BitInputStream(in);
@@ -132,9 +137,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         // Check if BITS PER INT here is redundant
         outBits.writeBits(BITS_PER_INT, IHuffConstants.STORE_COUNTS);
-        // TODO: Check what format the file is in, based on this write SCF/STF constant accordingly
+        // TODO: Check what format the file is in, based on this write SCF/STF constant
+        // accordingly
         // For now: write data for SCF
-        for(int k=0; k < IHuffConstants.ALPH_SIZE; k++) {
+        for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
             outBits.writeBits(IHuffConstants.BITS_PER_INT, freq[k]);
         }
 
@@ -145,7 +151,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             inBits = inBitStream.readBits(IHuffConstants.BITS_PER_INT);
             bitsWritten += IHuffConstants.BITS_PER_INT;
         }
-         return bitsWritten;
+        return bitsWritten;
     }
 
     /**
