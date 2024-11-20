@@ -148,6 +148,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         bitsWritten += IHuffConstants.BITS_PER_INT * 2 + compressionHuffTree.getSumOfAllCodes();
 
         while (inBits != -1) {
+
+            // TODO: The compressionMap needs to have its keys changed to Strings instead of integers
+            // TODO: because of integer overflow on very long strings (ex: 0110111101111000011110)
             outBits.writeBits(IHuffConstants.BITS_PER_WORD,
                     Integer.parseInt(compressionHuffMap.get(inBits)));
             inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
