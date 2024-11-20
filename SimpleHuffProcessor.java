@@ -153,7 +153,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
         }
 
-        System.out.println("bits written: " + bitsWritten);
+        //System.out.println("bits written: " + bitsWritten);
         return bitsWritten;
     }
 

@@ -207,8 +207,9 @@ public class TextHuffViewer implements IHuffViewer {
         } else {
             try {
                 FileOutputStream out = new FileOutputStream(new File(newName));
+                System.out.println("input file name:" + myInputFile.getName());
                 ByteArrayInputStream inputStream = getFastByteReader(myInputFile);
-                myModel.compress(inputStream, out, myForce);
+                System.out.println("saved bits TEST: " + myModel.compress(inputStream, out, myForce));
             } catch (IOException e) {
                 showError("Problem while trying to compress file.");
                 e.printStackTrace();
