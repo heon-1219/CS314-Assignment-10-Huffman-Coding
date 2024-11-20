@@ -84,24 +84,69 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return (HashMap<Integer, String>) huffManCodes;
     }
 
-    // for STF
+    // preorder traversal to figure out size rep. and tree shape
+    public String preorderShape(TreeNode node, StringBuilder soFar) {
+        if (node == null) {
+            return soFar.toString();
+        }
+
+        if (!node.isLeaf()) {
+            soFar.append(0);
+            preorderShape(node.getLeft(), soFar);
+            preorderShape(node.getRight(), soFar);
+        } else {
+            soFar.append(1);
+            // Append the node value in binary format with 9 bits
+            soFar.append(toBinary(node.getValue(), 9));
+        }
+
+        return "";
+    }
+
+    /**
+     * Puts together tree header and returns it
+     * 
+     * @return tree's header + actual value
+     */
     public String treeHeader() {
         StringBuilder header = new StringBuilder();
 
-        for (Map.Entry<Integer, String> entry : huffManCodes.entrySet()) {
-            String huffCode = entry.getValue();
-            header.append(huffCode);
+        // tree size / shape
+        header.append(preorderShape(root, header));
+        int lenNow = header.length();
 
-            int character = entry.getKey();
-            StringBuilder binary = new StringBuilder();
-            while (character > 0) {
-                int remainder = character % 2;
-                binary.insert(0, remainder);
-                character = character / 2;
-            }
-            header.append(binary);
-        }
+        header.insert(0, toBinary(lenNow, 32));
+
+        // for (Map.Entry<Integer, String> entry : huffManCodes.entrySet()) {
+        // String huffCode = entry.getValue();
+        // header.append(huffCode);
+
+        // // append binarified value to header
+        // // header.append(toBinary(entry.getKey(), 0));
+        // }
 
         return header.toString();
+    }
+
+    /**
+     * convert integer value into its binary form
+     * 
+     * @param value  value being transformed
+     * @param format determine the length. e.g., 9 will return 9 bits
+     * @return binary form of the value given
+     */
+    private String toBinary(int value, int format) {
+        StringBuilder binary = new StringBuilder();
+        while (value > 0) {
+            binary.append(value % 2);
+            value /= 2;
+        }
+        binary.reverse();
+
+        while (format > binary.length()) {
+            binary.insert(0, 0);
+        }
+
+        return binary.toString();
     }
 }

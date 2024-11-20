@@ -73,7 +73,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         while (inbits != -1) {
             freq[inbits]++;
             inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
-            System.out.println(inbits);
+            // System.out.println(inbits);
             numBits += IHuffConstants.BITS_PER_WORD;
         }
 
@@ -81,27 +81,26 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             if (freq[i] > 0) {
                 frequencyQueue.enqueue(new TreeNode(i, freq[i]));
             }
-            System.out.println("Chunk: " + i + ", Freq: " + freq[i]);
+            // System.out.println("Chunk: " + i + ", Freq: " + freq[i]);
         }
 
         // Adding PEOF value
         frequencyQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
-        System.out.println("Frequency Queue: " + frequencyQueue);
+        // System.out.println("Frequency Queue: " + frequencyQueue);
 
         // Generate huffman tree
         compressionHuffTree = new HuffmanTree<>(frequencyQueue);
         compressionHuffMap = compressionHuffTree.getHuffManCodes();
 
         System.out.println("codes: " + compressionHuffTree.getHuffManCodes());
-        // TODO
+        // TODO STF
         String STF = compressionHuffTree.treeHeader();
-        System.out.println(STF);
+        System.out.println(numBits - (STF.length() + (BITS_PER_INT * 2) + compressionHuffTree.getSumOfAllCodes()));
         int headerInfo = BITS_PER_INT * 2 + (ALPH_SIZE * BITS_PER_INT);
 
         // Number of bits in file minus 32 for magic number, minus 32 for STORE_COUNTS/
         // STORE_TREE constant, then subtract the amount of bits in compressed file,
         // then subtract header for compressed file (32 bits)
-        System.out.println(numBits);
         System.out.println(numBits - (headerInfo + compressionHuffTree.getSumOfAllCodes())); // huffmanTree.getSumOfAllCodes());
         return numBits - (headerInfo + compressionHuffTree.getSumOfAllCodes());
     }
