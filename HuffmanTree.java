@@ -1,6 +1,6 @@
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -43,9 +43,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
 
     }
 
-    public int getPEOFCode() {
-        return Integer.parseInt(getCode(IHuffConstants.ALPH_SIZE));
-    }
+
 
     private String getCode(int value) {
         StringBuilder sb = new StringBuilder();
@@ -85,17 +83,17 @@ public class HuffmanTree<E extends Comparable<? super E>> {
     }
 
     public HuffmanTree() {
-        huffManCodes = new HashMap<>();
-        getFreqPerCode = new HashMap<>();
-        decompressionCodes = new HashMap<>();
+        huffManCodes = new TreeMap<>();
+        getFreqPerCode = new TreeMap<>();
+        decompressionCodes = new TreeMap<>();
     }
 
-    public HashMap<Integer, String> getHuffManCodes() {
-        return (HashMap<Integer, String>) huffManCodes;
+    public TreeMap<Integer, String> getHuffManCodes() {
+        return (TreeMap<Integer, String>) huffManCodes;
     }
 
-    public HashMap<String, String> getDecompressionCodes() {
-        return (HashMap<String, String>) decompressionCodes;
+    public TreeMap<String, String> getDecompressionCodes() {
+        return (TreeMap<String, String>) decompressionCodes;
     }
 
     // preorder traversal to figure out size rep. and tree shape
