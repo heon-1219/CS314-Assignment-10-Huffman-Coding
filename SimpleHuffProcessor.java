@@ -28,6 +28,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private HuffmanTree<TreeNode> compressionHuffTree;
     private Map<Integer, String> compressionHuffMap;
     private int[] freq;
+    private int peof;
 
     public SimpleHuffProcessor() {
         frequencyQueue = new PriorityQueue314<>();
@@ -91,6 +92,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // Generate huffman tree
         compressionHuffTree = new HuffmanTree<>(frequencyQueue);
         compressionHuffMap = compressionHuffTree.getHuffManCodes();
+        peof = compressionHuffTree.getPEOFCode();
 
         int headerInfo = BITS_PER_INT * 2;
         headerInfo += headerFormat == IHuffConstants.STORE_COUNTS ?
@@ -140,7 +142,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // accordingly
         // For now: write data for SCF
         for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-            outBits.writeBits(IHuffConstants.BITS_PER_INT, freq[k]);
+            outBits.writeBits(IHuffConstants.BITS_PER_INT, Integer.parseInt(HuffmanTree.
+                    toBinary(freq[k], BITS_PER_INT)));
             bitsWritten += IHuffConstants.BITS_PER_INT;
         }
 
@@ -155,6 +158,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     Integer.parseInt(compressionHuffMap.get(inBits)));
             inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
         }
+        outBits.writeBits(IHuffConstants.BITS_PER_WORD, peof);
 
         //System.out.println("bits written: " + bitsWritten);
         return bitsWritten;
@@ -172,10 +176,43 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      */
     public int uncompress(InputStream in, OutputStream out) throws IOException {
 
+        BitInputStream inputStream = new BitInputStream(in);
+        BitOutputStream outputStream = new BitOutputStream(out);
+        int bitsWritten = 0;
 
-        throw new IOException("uncompress not implemented");
-        // return 0;
+        int magicNum = inputStream.readBits(BITS_PER_INT);
+        int headerFormat = inputStream.readBits(BITS_PER_INT);
+
+        if (magicNum != MAGIC_NUMBER || (headerFormat != STORE_COUNTS && headerFormat != STORE_TREE)) {
+            throw new IOException("Invalid magic number.");
+        }
+        PriorityQueue314<TreeNode> decompressQueue = new PriorityQueue314<>();
+        // ONLY FOR SCF
+        for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
+            int headerBit = Integer.parseInt("" + inputStream.readBits(BITS_PER_INT), 2);
+            if (headerBit > 0) {
+                // value, frequency
+                decompressQueue.enqueue(new TreeNode(k, headerBit));
+            }
+        }
+        decompressQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
+        HuffmanTree<TreeNode> decompressionTree = new HuffmanTree<>(decompressQueue);
+        HashMap<String, String> decompressMap = decompressionTree.getDecompressionCodes();
+
+        int inBits = inputStream.readBits(IHuffConstants.BITS_PER_WORD);
+        int newPEOF = decompressionTree.getPEOFCode();
+
+        while (inBits != -1 && inBits != newPEOF) {
+            outputStream.writeBits(IHuffConstants.BITS_PER_WORD,
+                    Integer.parseInt(decompressMap.get(String.valueOf(inBits))));
+            bitsWritten += IHuffConstants.BITS_PER_WORD;
+            inBits = inputStream.readBits(IHuffConstants.BITS_PER_WORD);
+        }
+
+         return bitsWritten;
     }
+
+
 
     public void setViewer(IHuffViewer viewer) {
         myViewer = viewer;

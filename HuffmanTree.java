@@ -8,6 +8,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
     private TreeNode root;
     private Map<Integer, String> huffManCodes;
     private Map<Integer, Integer> getFreqPerCode;
+    private Map<String, String> decompressionCodes;
 
 
     // TODO Check with TAs if this has to be generic or not
@@ -35,9 +36,14 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         // System.out.println(list);
         for (Integer value : list) {
             huffManCodes.put(value, getCode(value));
+            decompressionCodes.put(getCode(value), String.valueOf(value));
         }
 
 
+    }
+
+    public int getPEOFCode() {
+        return Integer.parseInt(getCode(IHuffConstants.ALPH_SIZE));
     }
 
     private String getCode(int value) {
@@ -80,10 +86,15 @@ public class HuffmanTree<E extends Comparable<? super E>> {
     public HuffmanTree() {
         huffManCodes = new HashMap<>();
         getFreqPerCode = new HashMap<>();
+        decompressionCodes = new HashMap<>();
     }
 
     public HashMap<Integer, String> getHuffManCodes() {
         return (HashMap<Integer, String>) huffManCodes;
+    }
+
+    public HashMap<String, String> getDecompressionCodes() {
+        return (HashMap<String, String>) decompressionCodes;
     }
 
     // preorder traversal to figure out size rep. and tree shape
@@ -137,7 +148,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
      * @param format determine the length. e.g., 9 will return 9 bits
      * @return binary form of the value given
      */
-    private String toBinary(int value, int format) {
+    public static String toBinary(int value, int format) {
         StringBuilder binary = new StringBuilder();
         while (value > 0) {
             binary.append(value % 2);
@@ -151,4 +162,6 @@ public class HuffmanTree<E extends Comparable<? super E>> {
 
         return binary.toString();
     }
+
+
 }
