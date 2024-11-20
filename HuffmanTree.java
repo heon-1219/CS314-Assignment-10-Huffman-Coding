@@ -8,7 +8,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
     private TreeNode root;
     private Map<Integer, String> huffManCodes;
     private Map<Integer, Integer> getFreqPerCode;
-    private int sum;
+
 
     // TODO Check with TAs if this has to be generic or not
     // Is this still needed to be asked? @mehtavihaanj
@@ -37,10 +37,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
             huffManCodes.put(value, getCode(value));
         }
 
-        for (Integer value : huffManCodes.keySet()) {
-            System.out.println("Code: " + huffManCodes.get(value) + " Frequency: " + getFreqPerCode.get(value));
-            sum += huffManCodes.get(value).length() * getFreqPerCode.get(value);
-        }
+
     }
 
     private String getCode(int value) {
@@ -51,6 +48,11 @@ public class HuffmanTree<E extends Comparable<? super E>> {
     }
 
     public int getSumOfAllCodes() {
+        int sum = 0;
+
+        for (Integer value : huffManCodes.keySet()) {
+            sum += huffManCodes.get(value).length() * getFreqPerCode.get(value);
+        }
         return sum;
     }
 

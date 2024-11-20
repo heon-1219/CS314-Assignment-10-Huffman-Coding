@@ -22,7 +22,6 @@ public class PriorityQueue314<E extends Comparable<? super E>>  {
             int index = 0;
             boolean indexFound = false;
             while (index < list.size() && !indexFound) {
-
                 // Does the current value have a higher frequency than value to add? then break
                 int compare = list.get(index).compareTo(e);
 
@@ -70,18 +69,4 @@ public class PriorityQueue314<E extends Comparable<? super E>>  {
     public String toString() {
         return list.toString();
     }
-
-
-/*private class PriorityQueue314Comparator implements Comparator<E> {
-
-    @Override
-    public int compare(E o1, E o2) {
-        int compare = o1.compareTo(o2);
-       // if (compare != 0) {
-            return compare;
-       // }
-       // return 1;
-    }
-}
-*/
 }
