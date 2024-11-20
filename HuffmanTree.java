@@ -35,8 +35,9 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         // Collections.sort(list);
         // System.out.println(list);
         for (Integer value : list) {
-            huffManCodes.put(value, getCode(value));
-            decompressionCodes.put(getCode(value), String.valueOf(value));
+            String code = getCode(value);
+            huffManCodes.put(value, code);
+            decompressionCodes.put(code, String.valueOf(value));
         }
 
 

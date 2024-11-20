@@ -142,8 +142,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // accordingly
         // For now: write data for SCF
         for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-            outBits.writeBits(IHuffConstants.BITS_PER_INT, Integer.parseInt(HuffmanTree.
-                    toBinary(freq[k], BITS_PER_INT)));
+
+            outBits.writeBits(IHuffConstants.BITS_PER_INT, freq[k]);
             bitsWritten += IHuffConstants.BITS_PER_INT;
         }
 
@@ -154,11 +154,12 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
             // TODO: The compressionMap needs to have its keys changed to Strings instead of integers
             // TODO: because of integer overflow on very long strings (ex: 0110111101111000011110)
-            outBits.writeBits(IHuffConstants.BITS_PER_WORD,
-                    Integer.parseInt(compressionHuffMap.get(inBits)));
+            String writeBitString = compressionHuffMap.get(inBits);
+                    outBits.writeBits(writeBitString.length(),
+                    Integer.parseInt(writeBitString));
             inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
         }
-        outBits.writeBits(IHuffConstants.BITS_PER_WORD, peof);
+        outBits.writeBits(String.valueOf(peof).length(), peof);
 
         //System.out.println("bits written: " + bitsWritten);
         return bitsWritten;
@@ -189,9 +190,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         PriorityQueue314<TreeNode> decompressQueue = new PriorityQueue314<>();
         // ONLY FOR SCF
         for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-            int headerBit = Integer.parseInt("" + inputStream.readBits(BITS_PER_INT), 2);
+            int headerBit = Integer.parseInt("" + inputStream.readBits(BITS_PER_INT));
             if (headerBit > 0) {
                 // value, frequency
+                // Is the value encoded the binary equivalent of number in the alphabet?
+                // additinally, how may bits read at once
                 decompressQueue.enqueue(new TreeNode(k, headerBit));
             }
         }
@@ -201,12 +204,20 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         int inBits = inputStream.readBits(IHuffConstants.BITS_PER_WORD);
         int newPEOF = decompressionTree.getPEOFCode();
+        StringBuilder currentValue = new StringBuilder();
+        currentValue.append(inBits);
 
-        while (inBits != -1 && inBits != newPEOF) {
-            outputStream.writeBits(IHuffConstants.BITS_PER_WORD,
-                    Integer.parseInt(decompressMap.get(String.valueOf(inBits))));
-            bitsWritten += IHuffConstants.BITS_PER_WORD;
-            inBits = inputStream.readBits(IHuffConstants.BITS_PER_WORD);
+        while (inBits != -1 && !currentValue.toString().equals(String.valueOf(newPEOF))) {
+
+            String entry = decompressMap.get(currentValue.toString());
+            if (entry != null) {
+                currentValue.setLength(0);
+                outputStream.writeBits(IHuffConstants.BITS_PER_WORD,
+                        Integer.parseInt(entry));
+                bitsWritten += IHuffConstants.BITS_PER_WORD;
+            }
+            inBits = inputStream.readBits(1);
+            currentValue.append(inBits);
         }
 
          return bitsWritten;
