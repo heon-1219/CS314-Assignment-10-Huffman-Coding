@@ -42,7 +42,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * count characters/create tree/store state so that
      * a subsequent call to compress will work. The InputStream
      * is <em>not</em> a BitInputStream, so wrap it int one as needed.
-     * 
+     *
      * @param in           is the stream which could be subsequently compressed
      * @param headerFormat a constant from IHuffProcessor that determines what kind
      *                     of header to use, standard count format, standard tree
@@ -62,13 +62,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // total - magic - headerFormat - header - totalCompressedinHuffman
 
         // Also make sure that it is equal to the magic number
-        if ((headerFormat != IHuffConstants.STORE_COUNTS &&
-                headerFormat != IHuffConstants.STORE_TREE) || inbits == -1) {
-            System.out.println("Invalid header format");
-            myViewer.showError("Error reading compressed file, "
-                    + "did not start with magic huff number.");
-            return -1;
-        }
+       // if ((headerFormat != IHuffConstants.STORE_COUNTS &&
+     //           headerFormat != IHuffConstants.STORE_TREE) || inbits == -1) {
+   //         System.out.println("Invalid header format");
+   //         myViewer.showError("Error reading compressed file, "
+  //                  + "did not start with magic huff number.");
+ //           return -1;
+   //     }
         freq = new int[IHuffConstants.ALPH_SIZE];
         // 0~255 + 256(Pseudo-EOF)
         int numBits = 0;
@@ -114,7 +114,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * storing state used by this call.
      * <br>
      * pre: <code>preprocessCompress</code> must be called before this method
-     * 
+     *
      * @param in    is the stream being compressed (NOT a BitInputStream)
      * @param out   is bound to a file/stream to which bits are written
      *              for the compressed file (not a BitOutputStream)
@@ -150,7 +150,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
 
             outBits.writeBits(IHuffConstants.BITS_PER_INT, freq[k]);
-          //  System.out.println(HuffmanTree.toBinary(freq[k], BITS_PER_INT));
+            //  System.out.println(HuffmanTree.toBinary(freq[k], BITS_PER_INT));
             bitsWritten += IHuffConstants.BITS_PER_INT;
         }
 
@@ -161,11 +161,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
             // TODO: The compressionMap needs to have its keys changed to Strings instead of integers
             // TODO: because of integer overflow on very long strings (ex: 0110111101111000011110)
-          //  System.out.println("inBits: " + inBits);
+            //  System.out.println("inBits: " + inBits);
             String writeBitString = compressionHuffMap.get(inBits);
             System.out.println("writing the bitstring: " + writeBitString + "decimal value: " + Integer.parseInt(writeBitString, 2));
             int value = Integer.parseInt(writeBitString, 2);
-        //    System.out.println("value: " + value);
+            //    System.out.println("value: " + value);
             outBits.writeBits(writeBitString.length(),
                     value);
             temporaryVal += writeBitString;
@@ -173,9 +173,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         }
         System.out.println("expected" + temporaryVal + compressionHuffMap.get(IHuffConstants.ALPH_SIZE));
-        int peof = Integer.parseInt(compressionHuffMap.get(IHuffConstants.ALPH_SIZE));
-    //    System.out.println("TEST PEOF" + peof);
-        outBits.writeBits(String.valueOf(peof).length(), peof);
+        String peof = compressionHuffMap.get(IHuffConstants.ALPH_SIZE);
+        //    System.out.println("TEST PEOF" + peof);
+        outBits.writeBits(String.valueOf(peof).length(), Integer.parseInt(peof, 2));
 
         //System.out.println("bits written: " + bitsWritten);
         return bitsWritten;
@@ -184,7 +184,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     /**
      * Uncompress a previously compressed stream in, writing the
      * uncompressed bits/data to out.
-     * 
+     *
      * @param in  is the previously compressed data (not a BitInputStream)
      * @param out is the uncompressed file/stream
      * @return the number of bits written to the uncompressed file/stream
@@ -205,7 +205,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
         PriorityQueue314<TreeNode> decompressQueue = new PriorityQueue314<>();
         // ONLY FOR SCF
-        for (int k = 0; k < IHuffConstants.ALPH_SIZE + 1; k++) {
+        for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
             int headerBit = inputStream.readBits(BITS_PER_INT);
             if (headerBit > 0) {
                 // value, frequency
@@ -218,18 +218,20 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         HuffmanTree<TreeNode> decompressionTree = new HuffmanTree<>(decompressQueue);
         TreeMap<String, String> decompressMap = decompressionTree.getDecompressionCodes();
 
-        System.out.println(decompressMap);
+        System.out.println(decompressionTree.getHuffManCodes());
 
         int inBits = 0;
-        int newPEOF = Integer.parseInt(decompressionTree.getHuffManCodes().get(IHuffConstants.ALPH_SIZE));
+        String newPEOF = decompressionTree.getHuffManCodes().get(IHuffConstants.ALPH_SIZE);
+        System.out.println("peof: " + newPEOF);
         StringBuilder currentValue = new StringBuilder();
-       // currentValue.append(inBits);
-
-        while (inBits != -1 && !currentValue.toString().equals(String.valueOf(newPEOF))) {
+        // currentValue.append(inBits);
+        System.out.println(decompressMap);
+        while (inBits != -1 && !currentValue.toString().equals(newPEOF)) {
 
             String entry = decompressMap.get(currentValue.toString());
             if (entry != null) {
-                System.out.println("entry is" + entry + " cur" + currentValue.toString());
+                // Entry is the original value from compression code, current value is the compression code
+                System.out.println("entry is " + entry + " cur" + currentValue.toString());
                 currentValue = new StringBuilder();
                 outputStream.writeBits(IHuffConstants.BITS_PER_WORD,
                         Integer.parseInt(entry));
@@ -237,10 +239,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             }
             inBits = inputStream.readBits(1);
             currentValue.append(inBits);
-           // System.out.println("current: " + currentValue);
+            System.out.println("current: " + currentValue);
         }
 
-         return bitsWritten;
+        return bitsWritten;
     }
 
 
