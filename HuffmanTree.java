@@ -6,10 +6,9 @@ import java.util.Map;
 
 public class HuffmanTree<E extends Comparable<? super E>> {
     private TreeNode root;
-    private Map<Integer, String> huffManCodes;
+    private Map<String, String> huffManCodes;
     private Map<Integer, Integer> getFreqPerCode;
     private Map<String, String> decompressionCodes;
-
 
     // TODO Check with TAs if this has to be generic or not
     // Is this still needed to be asked? @mehtavihaanj
@@ -36,14 +35,12 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         // System.out.println(list);
         for (Integer value : list) {
             String code = getCode(value);
-            huffManCodes.put(value, code);
+            String val = String.valueOf(value);
+            huffManCodes.put(val, code);
             decompressionCodes.put(code, String.valueOf(value));
         }
 
-
     }
-
-
 
     private String getCode(int value) {
         StringBuilder sb = new StringBuilder();
@@ -55,8 +52,8 @@ public class HuffmanTree<E extends Comparable<? super E>> {
     public int getSumOfAllCodes() {
         int sum = 0;
 
-        for (Integer value : huffManCodes.keySet()) {
-            sum += huffManCodes.get(value).length() * getFreqPerCode.get(value);
+        for (String value : huffManCodes.keySet()) {
+            sum += huffManCodes.get(value).length() * getFreqPerCode.get(Integer.parseInt(value));
         }
         return sum;
     }
@@ -88,8 +85,8 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         decompressionCodes = new TreeMap<>();
     }
 
-    public TreeMap<Integer, String> getHuffManCodes() {
-        return (TreeMap<Integer, String>) huffManCodes;
+    public TreeMap<String, String> getHuffManCodes() {
+        return (TreeMap<String, String>) huffManCodes;
     }
 
     public TreeMap<String, String> getDecompressionCodes() {
@@ -115,6 +112,15 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return "";
     }
 
+    public String treeSize() {
+        StringBuilder shape = new StringBuilder();
+        shape.append(preorderShape(root, shape));
+
+        int size = shape.toString().length();
+
+        return toBinary(size, IHuffConstants.BITS_PER_INT);
+    }
+
     /**
      * Puts together tree header and returns it
      * 
@@ -128,15 +134,6 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         int lenNow = header.length();
 
         header.insert(0, toBinary(lenNow, 32));
-
-        // for (Map.Entry<Integer, String> entry : huffManCodes.entrySet()) {
-        // String huffCode = entry.getValue();
-        // header.append(huffCode);
-
-        // // append binarified value to header
-        // // header.append(toBinary(entry.getKey(), 0));
-        // }
-
         return header.toString();
     }
 
@@ -161,6 +158,4 @@ public class HuffmanTree<E extends Comparable<? super E>> {
 
         return binary.toString();
     }
-
-
 }
