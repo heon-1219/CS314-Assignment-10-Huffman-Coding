@@ -179,6 +179,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return binary.toString();
     }
 
+    // get the root, which is technically the tree.
     public TreeNode getRoot() {
         return root;
     }

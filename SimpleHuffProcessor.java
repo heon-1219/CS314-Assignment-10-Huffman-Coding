@@ -256,20 +256,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                 // increment bits written
                 traversalNode = decompressedTree.getRoot();
             }
-
-            // read next bit
-            // bitsRead +=
-            // see where we are
-
-            // if not a leaf node, continue.
-
-            // if a leaf node, then print the value, reset the point to root
-
         }
 
-        // generate the unhf based on the huffman codes and the tree, using outputStream
-        // inputStream.close();
-        // outputStream.close();
         return bitsRead;
     }
 
@@ -298,36 +286,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private void showString(String s) {
         if (myViewer != null) {
             myViewer.update(s);
-        }
-    }
-
-    // tuple class
-    private static class Tuple implements Comparable<Tuple> {
-        private int code;
-        private int frequency;
-
-        // basic constructor for tuple
-        public Tuple(int code, int frequency) {
-            this.code = code;
-            this.frequency = frequency;
-        }
-
-        @Override
-        // compare if two objects are equal
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            } else if (!(o instanceof Tuple)) {
-                return false;
-            }
-            Tuple tuple = (Tuple) o;
-            return code == tuple.code;
-        }
-
-        @Override
-        // compare internally if two objects are equal, return n z p
-        public int compareTo(Tuple o) {
-            return frequency - o.frequency;
         }
     }
 }
