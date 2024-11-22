@@ -1,284 +1,186 @@
-/*  Student information for assignment:
- *
- *  On our honor, Vihaan Mehta and Seheon (David) Chang, this programming assignment is our own work
- *  and we have not provided this code to any other student.
- *
- *  Number of slip days used: 0
- *
- *  Student 1 (Student whose Canvas account is being used)
- *  UTEID: vjm655
- *  email address: mehtavihaanj@gmail.com
- *  Grader name: Gracelynn
- *
- *  Student 2
- *  UTEID: sc68766
- *  email address: seheon.chang@utexas.edu
- *
- */
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
-public class SimpleHuffProcessor implements IHuffProcessor {
+public class HuffmanTree<E extends Comparable<? super E>> {
+    private TreeNode root;
+    private Map<String, String> huffManCodes;
+    private Map<Integer, Integer> getFreqPerCode;
 
-    private IHuffViewer myViewer;
-    private PriorityQueue314<TreeNode> frequencyQueue;
-    private HuffmanTree<TreeNode> compressionHuffTree;
-    private Map<String, String> compressionHuffMap;
-    private int[] freq;
-    private boolean countOrTree;
 
-    // basic constructor for simple huff processor. Instance variables initialized.
-    public SimpleHuffProcessor() {
-        frequencyQueue = new PriorityQueue314<>();
-        compressionHuffTree = new HuffmanTree<>();
-        freq = new int[IHuffConstants.ALPH_SIZE];
-        compressionHuffMap = new HashMap<>();
+    // constructor for generating huffman tree with a priority queue
+    public HuffmanTree(PriorityQueue314<TreeNode> pq) {
+        getFreqPerCode = new HashMap<>();
+        huffManCodes = new HashMap<>();
+
+        ArrayList<Integer> list = new ArrayList<>();
+        Iterator<TreeNode> it = pq.iterator();
+
+        while (it.hasNext()) {
+            TreeNode temp = it.next();
+            list.add(temp.getValue());
+            getFreqPerCode.put(temp.getValue(), temp.getFrequency());
+        }
+
+        while (pq.size() > 1) {
+            TreeNode left = pq.poll();
+            TreeNode right = pq.poll();
+            pq.enqueue(new TreeNode(left, -1, right));
+        }
+        root = pq.poll();
+        for (Integer value : list) {
+            String code = getCode(value);
+            String val = String.valueOf(value);
+            huffManCodes.put(val, code);
+        }
     }
 
-    /**
-     * Preprocess data so that compression is possible ---
-     * count characters/create tree/store state so that
-     * a subsequent call to compress will work. The InputStream
-     * is <em>not</em> a BitInputStream, so wrap it int one as needed.
-     *
-     * @param in           is the stream which could be subsequently compressed
-     * @param headerFormat a constant from IHuffProcessor that determines what kind
-     *                     of header to use, standard count format, standard tree
-     *                     format, or possibly some format added in the future.
-     * @return number of bits saved by compression or some other measure
-     *         Note, to determine the number of
-     *         bits saved, the number of bits written includes
-     *         ALL bits that will be written including the
-     *         magic number, the header format number, the header to
-     *         reproduce the tree, AND the actual data.
-     * @throws IOException if an error occurs while reading from the input file.
-     */
-    public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
-        countOrTree = (headerFormat == IHuffConstants.STORE_COUNTS);
-        BitInputStream bits = new BitInputStream(in);
-        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
-
-        int numBits = 0;
-        while (inbits != -1) {
-            freq[inbits]++;
-            inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
-            numBits += IHuffConstants.BITS_PER_WORD;
-        }
-
-        for (int i = 0; i < freq.length; i++) {
-            if (freq[i] > 0) {
-                frequencyQueue.enqueue(new TreeNode(i, freq[i]));
-            }
-        }
-
-        // Adding PEOF value
-        frequencyQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
-
-        // Generate huffman tree
-        compressionHuffTree = new HuffmanTree<>(frequencyQueue);
-        compressionHuffMap = compressionHuffTree.getHuffManCodes();
-
-        int headerInfo = BITS_PER_INT * 2;
-
-        headerInfo += headerFormat == IHuffConstants.STORE_COUNTS ? ALPH_SIZE * BITS_PER_INT
-                : compressionHuffTree.treeHeader().length();
-        // in.close();
-        // bits.close();
-
-        return numBits - (headerInfo + compressionHuffTree.getSumOfAllCodes());
+    // constructor for generating huffman tree with a tree header
+    public HuffmanTree(String treeData) throws IOException {
+        root = rebuildTree(treeData, new TreeNode(null, 0, null), false);
     }
 
-    /**
-     * Compresses input to output, where the same InputStream has
-     * previously been pre-processed via <code>pxreprocessCompress</code>
-     * storing state used by this call.
-     * <br>
-     * pre: <code>preprocessCompress</code> must be called before this method
-     *
-     * @param in    is the stream being compressed (NOT a BitInputStream)
-     * @param out   is bound to a file/stream to which bits are written
-     *              for the compressed file (not a BitOutputStream)
-     * @param force if this is true create the output file even if it is larger than
-     *              the input file.
-     *              If this is false do not create the output file if it is larger
-     *              than the input file.
-     * @return the number of bits written.
-     * @throws IOException if an error occurs while reading from the input file or
-     *                     writing to the output file.
-     */
-    public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
-        int bitsWritten = 0;
-        BitOutputStream outBits = new BitOutputStream(out);
-        BitInputStream inBitStream = new BitInputStream(in);
+    // recursive helper method for rebuilding the tree with tree header
+    private TreeNode rebuildTree(String treeData, TreeNode node, boolean hasEOF)
+            throws IOException {
+        int bit = Integer.parseInt(treeData.substring(0, 1));
+        treeData = treeData.substring(1);
 
-        // 1. write the magic number
-        outBits.writeBits(IHuffConstants.BITS_PER_INT, IHuffConstants.MAGIC_NUMBER);
+        if (bit == 0) {
+            // internal node
+            node = new TreeNode(-1, 1);
+            node.setLeft(rebuildTree(treeData, node, hasEOF));
+            node.setRight(rebuildTree(treeData, node, hasEOF));
+        } else if (bit == 1) {
+            // turn the binary formatted value into decimal. Now index for huffman.
+            int binaryValue = IHuffConstants.BITS_PER_WORD + 1;
+            int value = Integer.parseInt(treeData.substring(0, binaryValue), 2);
 
-        // 2 and 3. header format, info to recreate the tree per header format
-        if (countOrTree) { // SCF
-            outBits.writeBits(BITS_PER_INT, IHuffConstants.STORE_COUNTS);
-
-            for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-                outBits.writeBits(IHuffConstants.BITS_PER_INT, freq[k]);
-                bitsWritten += IHuffConstants.BITS_PER_INT;
+            // check if PSEUDO_EOF value exists
+            if (value == IHuffConstants.ALPH_SIZE) {
+                hasEOF = true;
             }
-
-            bitsWritten += IHuffConstants.BITS_PER_INT * 2 + compressionHuffTree.getSumOfAllCodes();
-        } else { // STF
-            outBits.writeBits(BITS_PER_INT, IHuffConstants.STORE_TREE);
-
-            // size of the tree
-            String treeSize = compressionHuffTree.treeSize();
-            for (int i = 0; i < treeSize.length(); i++) {
-                outBits.writeBits(1, treeSize.charAt(i) - '0');
-            }
-
-            // then tree shape
-            String treeHeader = compressionHuffTree.treeHeader();
-            for (int i = 0; i < treeHeader.length(); i++) {
-                outBits.writeBits(1, treeHeader.charAt(i) - '0');
-            }
-
-            bitsWritten = treeHeader.length() + treeSize.length() + IHuffConstants.BITS_PER_INT
-                    + compressionHuffTree.getSumOfAllCodes();
+            return new TreeNode(value, 1);
         }
 
-        int inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
-        String temporaryVal = "";
-
-        // 4. The actual compressed data
-        while (inBits != -1) {
-            String writeBitString = compressionHuffMap.get(String.valueOf(inBits));
-            int value = Integer.parseInt(writeBitString, 2);
-
-            outBits.writeBits(writeBitString.length(),
-                    value);
-            temporaryVal += writeBitString;
-            inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
+        if (hasEOF == false) {
+            throw new IOException("Error reading compressed file. \n" +
+                    "unexpected end of input. No PSEUDO_EOF character.");
         }
-
-        String stringAlph = String.valueOf(IHuffConstants.ALPH_SIZE);
-
-        // 5. Write PSEUDO_EOF code
-        String peof = compressionHuffMap.get(stringAlph);
-        temporaryVal += peof;
-        outBits.writeBits(peof.length(), Integer.parseInt(peof, 2));
-
-        outBits.close();
-        inBitStream.close();
-        return bitsWritten;
+        return node;
     }
 
-    /**
-     * Uncompress a previously compressed stream in, writing the
-     * uncompressed bits/data to out.
-     *
-     * @param in  is the previously compressed data (not a BitInputStream)
-     * @param out is the uncompressed file/stream
-     * @return the number of bits written to the uncompressed file/stream
-     * @throws IOException if an error occurs while reading from the input file or
-     *                     writing to the output file.
-     */
-    public int uncompress(InputStream in, OutputStream out) throws IOException {
-        BitInputStream inputStream = new BitInputStream(in);
-        BitOutputStream outputStream = new BitOutputStream(out);
-        int bitsRead = 0;
-
-        // read the magic num, header format, and evaluate rather SCF or STF
-        int magicNum = inputStream.readBits(BITS_PER_INT);
-        int headerFormat = inputStream.readBits(BITS_PER_INT);
-        bitsRead += BITS_PER_INT * 2;
-
-        // determine if the correct file or header format
-        if (magicNum != MAGIC_NUMBER || (headerFormat != STORE_COUNTS && headerFormat != STORE_TREE)) {
-            myViewer.showError("Error reading compressed file. \n" +
-                    "File did not start with the huff magic number.");
-            inputStream.close();
-            outputStream.close();
-            return -1;
-        }
-
-        // decompressing the tree starts here
-        HuffmanTree<TreeNode> decompressedTree;
-
-        if (headerFormat == STORE_COUNTS) { // SCF
-            PriorityQueue314<TreeNode> decompressQueue = new PriorityQueue314<>();
-
-            // read the 256 lines and turn it in to a frequency que, then turn the q to tree
-            for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-                int headerBit = inputStream.readBits(BITS_PER_INT);
-                if (headerBit > 0) {
-                    decompressQueue.enqueue(new TreeNode(k, headerBit));
-                }
-            }
-
-            bitsRead += ALPH_SIZE * BITS_PER_INT;
-            decompressQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
-            decompressedTree = new HuffmanTree<>(decompressQueue);
-
-        } else { // STF
-            int treeSize = inputStream.readBits(BITS_PER_INT);
-            treeSize = binaryToDecimal(treeSize);
-
-            String treeData = Integer.toString(inputStream.readBits(treeSize));
-            bitsRead += BITS_PER_INT + treeSize;
-
-            decompressedTree = new HuffmanTree<>(treeData);
-        }
-        String newPEOF = decompressedTree.getHuffManCodes().get(String.valueOf(ALPH_SIZE));
-        int inBits = 0;
-        StringBuilder currentValue = new StringBuilder();
-        TreeNode traversalNode = decompressedTree.getRoot();
-
-        // read the huffman codes
-        while (inBits != -1 && !currentValue.toString().equals(newPEOF)) {
-            inBits = inputStream.readBits(1);
-            if (inBits == 1) {
-                traversalNode = traversalNode.getRight();
-            } else {
-                traversalNode = traversalNode.getLeft();
-            }
-
-            if (traversalNode.isLeaf() && traversalNode.getValue() != Integer.parseInt(newPEOF, 2)) {
-                outputStream.writeBits(BITS_PER_WORD, traversalNode.getValue());
-                // increment bits written
-                traversalNode = decompressedTree.getRoot();
-            }
-        }
-
-        inputStream.close();
-        outputStream.close();
-        return bitsRead;
+    // default constructor
+    public HuffmanTree() {
+        huffManCodes = new HashMap<>();
+        getFreqPerCode = new HashMap<>();
     }
 
-    // convert binary to decimal. Required for tree size
-    private int binaryToDecimal(int binary) {
-        int decimal = 0;
-        int base = 1;
-
-        while (binary > 0) {
-            int lastDigit = binary % 10;
-            decimal += lastDigit * base;
-
-            base *= 2;
-            binary /= 10;
-        }
-
-        return decimal;
+    // return the huffman code for a specific ascii value
+    private String getCode(int value) {
+        StringBuilder sb = new StringBuilder();
+        TreeNode node = root;
+        getCodeHelper(value, node, sb);
+        return sb.toString();
     }
 
-    // set the viewer to interact with EX: GUIHuffviewer
-    public void setViewer(IHuffViewer viewer) {
-        myViewer = viewer;
+    // return the length of total huffman code
+    public int getSumOfAllCodes() {
+        int sum = 0;
+
+        for (String value : huffManCodes.keySet()) {
+            sum += huffManCodes.get(value).length() * getFreqPerCode.get(Integer.parseInt(value));
+        }
+        return sum;
     }
 
-    // show a string value on the viewer
-    private void showString(String s) {
-        if (myViewer != null) {
-            myViewer.update(s);
+    // recursive method to help obtain the huffman code
+    private int getCodeHelper(int value, TreeNode node, StringBuilder code) {
+        if (node != null && node.getValue() != value) {
+            code.append(0);
+            int leftResult = getCodeHelper(value, node.getLeft(), code);
+            if (leftResult == value) {
+                return leftResult;
+            }
+            code.replace(code.length() - 1, code.length(), "");
+
+            code.append(1);
+            int rightResult = getCodeHelper(value, node.getRight(), code);
+            if (rightResult == value) {
+                return rightResult;
+            }
+            code.replace(code.length() - 1, code.length(), "");
+        } else if (node != null && node.getValue() == value) {
+            return value;
         }
+        return -1;
+    }
+
+    // return a hashmap of huffman codes, <ASCII, HUFF CODE>
+    public HashMap<String, String> getHuffManCodes() {
+        return (HashMap<String, String>) huffManCodes;
+    }
+
+    // preorder traversal to figure out size rep. and tree shape
+    public String preorderShape(TreeNode node, StringBuilder soFar) {
+        if (node == null) {
+            return soFar.toString();
+        }
+
+        if (!node.isLeaf()) {
+            soFar.append(0);
+            preorderShape(node.getLeft(), soFar);
+            preorderShape(node.getRight(), soFar);
+        } else {
+            soFar.append(1);
+            // Append the node value in binary format with 9 bits
+            soFar.append(toBinary(node.getValue(), 9));
+        }
+
+        return "";
+    }
+
+    // calculate and return the size of tree in binary format
+    public String treeSize() {
+        StringBuilder shape = new StringBuilder();
+        shape.append(preorderShape(root, shape));
+
+        int size = shape.toString().length();
+
+        return toBinary(size, IHuffConstants.BITS_PER_INT);
+    }
+
+    // put together a tree header and return it
+    public String treeHeader() {
+        StringBuilder header = new StringBuilder();
+
+        // tree size / shape
+        header.append(preorderShape(root, header));
+        int lenNow = header.length();
+
+        header.insert(0, toBinary(lenNow, 32));
+        return header.toString();
+    }
+
+    // convert an integer value into binary format with n(format) places
+    public static String toBinary(int value, int format) {
+        StringBuilder binary = new StringBuilder();
+        while (value > 0) {
+            binary.append(value % 2);
+            value /= 2;
+        }
+        binary.reverse();
+
+        while (format > binary.length()) {
+            binary.insert(0, 0);
+        }
+
+        return binary.toString();
+    }
+
+    public TreeNode getRoot() {
+        return root;
     }
 }
