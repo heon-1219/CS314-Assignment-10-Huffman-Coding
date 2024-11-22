@@ -1,19 +1,19 @@
-
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.io.IOException;
 
 public class HuffmanTree<E extends Comparable<? super E>> {
     private TreeNode root;
     private Map<String, String> huffManCodes;
     private Map<Integer, Integer> getFreqPerCode;
-    private Map<String, String> decompressionCodes;
 
-    // TODO Check with TAs if this has to be generic or not
-    // Is this still needed to be asked? @mehtavihaanj
+    // constructor for generating huffman tree with a priority queue
     public HuffmanTree(PriorityQueue314<TreeNode> pq) {
-        this();
+        getFreqPerCode = new TreeMap<Integer, Integer>();
+        huffManCodes = new TreeMap<String, String>();
+
         ArrayList<Integer> list = new ArrayList<>();
         Iterator<TreeNode> it = pq.iterator();
 
@@ -29,19 +29,55 @@ public class HuffmanTree<E extends Comparable<? super E>> {
             pq.enqueue(new TreeNode(left, -1, right));
         }
         root = pq.poll();
-
-        // System.out.println("DATA: " + root.getRight().getLeft().getValue());
-        // Collections.sort(list);
-        // System.out.println(list);
         for (Integer value : list) {
             String code = getCode(value);
             String val = String.valueOf(value);
             huffManCodes.put(val, code);
-            decompressionCodes.put(code, String.valueOf(value));
         }
-
     }
 
+    // constructor for generating huffman tree with a tree header
+    public HuffmanTree(String treeData) throws IOException {
+        root = rebuildTree(treeData, new TreeNode(null, 0, null), false);
+    }
+
+    // recursive helper method for rebuilding the tree with tree header
+    private TreeNode rebuildTree(String treeData, TreeNode node, boolean hasEOF)
+            throws IOException {
+        int bit = Integer.parseInt(treeData.substring(0, 1));
+        treeData = treeData.substring(1);
+
+        if (bit == 0) {
+            // internal node
+            node = new TreeNode(-1, 1);
+            node.setLeft(rebuildTree(treeData, node, hasEOF));
+            node.setRight(rebuildTree(treeData, node, hasEOF));
+        } else if (bit == 1) {
+            // turn the binary formatted value into decimal. Now index for huffman.
+            int binaryValue = IHuffConstants.BITS_PER_WORD + 1;
+            int value = Integer.parseInt(treeData.substring(0, binaryValue), 2);
+
+            // check if PSEUDO_EOF value exists
+            if (value == IHuffConstants.ALPH_SIZE) {
+                hasEOF = true;
+            }
+            return new TreeNode(value, 1);
+        }
+
+        if (hasEOF == false) {
+            throw new IOException("Error reading compressed file. \n" +
+                    "unexpected end of input. No PSEUDO_EOF character.");
+        }
+        return node;
+    }
+
+    // default constructor
+    public HuffmanTree() {
+        huffManCodes = new TreeMap<>();
+        getFreqPerCode = new TreeMap<>();
+    }
+
+    // return the huffman code for a specific ascii value
     private String getCode(int value) {
         StringBuilder sb = new StringBuilder();
         TreeNode node = root;
@@ -49,6 +85,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return sb.toString();
     }
 
+    // return the length of total huffman code
     public int getSumOfAllCodes() {
         int sum = 0;
 
@@ -58,6 +95,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return sum;
     }
 
+    // recursive method to help obtain the huffman code
     private int getCodeHelper(int value, TreeNode node, StringBuilder code) {
         if (node != null && node.getValue() != value) {
             code.append(0);
@@ -79,18 +117,9 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return -1;
     }
 
-    public HuffmanTree() {
-        huffManCodes = new TreeMap<>();
-        getFreqPerCode = new TreeMap<>();
-        decompressionCodes = new TreeMap<>();
-    }
-
+    // return a treemap of huffman codes, <ASCII, HUFF CODE>
     public TreeMap<String, String> getHuffManCodes() {
         return (TreeMap<String, String>) huffManCodes;
-    }
-
-    public TreeMap<String, String> getDecompressionCodes() {
-        return (TreeMap<String, String>) decompressionCodes;
     }
 
     // preorder traversal to figure out size rep. and tree shape
@@ -112,6 +141,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return "";
     }
 
+    // calculate and return the size of tree in binary format
     public String treeSize() {
         StringBuilder shape = new StringBuilder();
         shape.append(preorderShape(root, shape));
@@ -121,11 +151,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return toBinary(size, IHuffConstants.BITS_PER_INT);
     }
 
-    /**
-     * Puts together tree header and returns it
-     * 
-     * @return tree's header + actual value
-     */
+    // put together a tree header and return it
     public String treeHeader() {
         StringBuilder header = new StringBuilder();
 
@@ -137,13 +163,7 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return header.toString();
     }
 
-    /**
-     * convert integer value into its binary form
-     * 
-     * @param value  value being transformed
-     * @param format determine the length. e.g., 9 will return 9 bits
-     * @return binary form of the value given
-     */
+    // convert an integer value into binary format with n(format) places
     public static String toBinary(int value, int format) {
         StringBuilder binary = new StringBuilder();
         while (value > 0) {

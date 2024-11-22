@@ -26,11 +26,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private IHuffViewer myViewer;
     private PriorityQueue314<TreeNode> frequencyQueue;
     private HuffmanTree<TreeNode> compressionHuffTree;
-    private Map<String, String> compressionHuffMap; // @vjm295 see if longer ones are saved now, I changed to <String,
-                                                    // String>
+    private Map<String, String> compressionHuffMap;
     private int[] freq;
     private boolean countOrTree;
 
+    // basic constructor for simple huff processor. Instance variables initialized.
     public SimpleHuffProcessor() {
         frequencyQueue = new PriorityQueue314<>();
         compressionHuffTree = new HuffmanTree<>();
@@ -57,12 +57,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
-        // instance variable for seeing if SCF or STF. TODO: Other ways to access header
-        // format in other methods?
         countOrTree = (headerFormat == IHuffConstants.STORE_COUNTS);
         BitInputStream bits = new BitInputStream(in);
         int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
-        // totalBits - magic # - headerFormat - header - total length of huffman codes
 
         int numBits = 0;
         while (inbits != -1) {
@@ -188,77 +185,108 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int uncompress(InputStream in, OutputStream out) throws IOException {
         BitInputStream inputStream = new BitInputStream(in);
         BitOutputStream outputStream = new BitOutputStream(out);
-        int bitsWritten = 0;
+        int bitsRead = 0;
 
+        // read the magic num, header format, and evaluate rather SCF or STF
         int magicNum = inputStream.readBits(BITS_PER_INT);
         int headerFormat = inputStream.readBits(BITS_PER_INT);
+        bitsRead += BITS_PER_INT * 2;
+
+        // determine if the correct file or header format
         if (magicNum != MAGIC_NUMBER || (headerFormat != STORE_COUNTS && headerFormat != STORE_TREE)) {
             myViewer.showError("Error reading compressed file. \n" +
                     "File did not start with the huff magic number.");
+            inputStream.close();
+            outputStream.close();
             return -1;
         }
-        PriorityQueue314<TreeNode> decompressQueue = new PriorityQueue314<>();
-        // ONLY FOR SCF
-        for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-            int headerBit = inputStream.readBits(BITS_PER_INT);
-            if (headerBit > 0) {
-                decompressQueue.enqueue(new TreeNode(k, headerBit));
+
+        // decompressing the tree starts here
+        HuffmanTree<TreeNode> decompressedTree;
+        if (headerFormat == STORE_COUNTS) { // SCF
+            PriorityQueue314<TreeNode> decompressQueue = new PriorityQueue314<>();
+
+            // read the 256 lines and turn it in to a frequency que, then turn the q to tree
+            for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
+                int headerBit = inputStream.readBits(BITS_PER_INT);
+                if (headerBit > 0) {
+                    decompressQueue.enqueue(new TreeNode(k, headerBit));
+                }
             }
-        }
-        decompressQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
-        HuffmanTree<TreeNode> decompressionTree = new HuffmanTree<>(decompressQueue);
-        TreeMap<String, String> decompressMap = decompressionTree.getDecompressionCodes();
 
-        System.out.println(decompressionTree.getHuffManCodes());
+            bitsRead += ALPH_SIZE * BITS_PER_INT;
+            decompressQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
+            decompressedTree = new HuffmanTree<>(decompressQueue);
 
-        int inBits = 0;
-        String newPEOF = decompressionTree.getHuffManCodes().get(IHuffConstants.ALPH_SIZE);
-        System.out.println("peof: " + newPEOF);
-        StringBuilder currentValue = new StringBuilder();
-        // currentValue.append(inBits);
-        System.out.println(decompressMap);
-        while (inBits != -1 && !currentValue.toString().equals(newPEOF)) {
+        } else if (headerFormat == STORE_TREE) { // STF
+            int treeSize = inputStream.readBits(BITS_PER_INT);
+            treeSize = binaryToDecimal(treeSize);
 
-            String entry = decompressMap.get(currentValue.toString());
-            if (entry != null) {
-                // Entry is the original value from compression code, current value is the
-                // compression code
-                System.out.println("entry is " + entry + " cur" + currentValue.toString());
-                currentValue = new StringBuilder();
-                outputStream.writeBits(IHuffConstants.BITS_PER_WORD,
-                        Integer.parseInt(entry));
-                bitsWritten += IHuffConstants.BITS_PER_WORD;
-            }
-            inBits = inputStream.readBits(1);
-            currentValue.append(inBits);
-            System.out.println("current: " + currentValue);
+            String treeData = Integer.toString(inputStream.readBits(treeSize));
+            bitsRead += BITS_PER_INT + treeSize;
+
+            decompressedTree = new HuffmanTree<>(treeData);
         }
 
+        // read the huffman codes
+        while (true) {
+            // read next bit
+            // bitsRead +=
+            // see where we are
+
+            // if not a leaf node, continue.
+
+            // if a leaf node, then print the value, reset the point to root
+
+        }
+
+        // generate the unhf based on the huffman codes and the tree, using outputStream
         inputStream.close();
         outputStream.close();
-        return bitsWritten;
+        return bitsRead;
     }
 
+    // convert binary to decimal
+    private int binaryToDecimal(int binary) {
+        int decimal = 0;
+        int base = 1;
+
+        while (binary > 0) {
+            int lastDigit = binary % 10;
+            decimal += lastDigit * base;
+
+            base *= 2;
+            binary /= 10;
+        }
+
+        return decimal;
+    }
+
+    // set the viewer to interact with EX: GUIHuffviewer
     public void setViewer(IHuffViewer viewer) {
         myViewer = viewer;
     }
 
+    // show a string value on the viewer
     private void showString(String s) {
         if (myViewer != null) {
             myViewer.update(s);
         }
     }
 
+    // tuple class
     private static class Tuple implements Comparable<Tuple> {
         private int code;
         private int frequency;
 
+        // basic constructor for tuple
         public Tuple(int code, int frequency) {
             this.code = code;
             this.frequency = frequency;
         }
 
         @Override
+        // compare if two objects are equal
         public boolean equals(Object o) {
             if (this == o) {
                 return true;
@@ -270,6 +298,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
 
         @Override
+        // compare internally if two objects are equal, return n z p
         public int compareTo(Tuple o) {
             return frequency - o.frequency;
         }
