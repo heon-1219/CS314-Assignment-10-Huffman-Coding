@@ -203,6 +203,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         // decompressing the tree starts here
         HuffmanTree<TreeNode> decompressedTree;
+
         if (headerFormat == STORE_COUNTS) { // SCF
             PriorityQueue314<TreeNode> decompressQueue = new PriorityQueue314<>();
 
