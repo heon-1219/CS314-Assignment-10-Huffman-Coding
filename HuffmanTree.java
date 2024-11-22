@@ -178,4 +178,8 @@ public class HuffmanTree<E extends Comparable<? super E>> {
 
         return binary.toString();
     }
+
+    public TreeNode getRoot() {
+        return root;
+    }
 }

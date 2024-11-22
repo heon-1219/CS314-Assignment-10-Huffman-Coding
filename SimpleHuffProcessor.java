@@ -85,8 +85,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         headerInfo += headerFormat == IHuffConstants.STORE_COUNTS ? ALPH_SIZE * BITS_PER_INT
                 : compressionHuffTree.treeHeader().length();
-        in.close();
-        bits.close();
+        // in.close();
+        // bits.close();
 
         return numBits - (headerInfo + compressionHuffTree.getSumOfAllCodes());
     }
@@ -151,24 +151,33 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         // 4. The actual compressed data
         while (inBits != -1) {
-            String writeBitString = compressionHuffMap.get(Integer.toString(inBits));
-
+            String writeBitString = compressionHuffMap.get(String.valueOf(inBits));
+            System.out.println("character just read: " + (char) inBits);
+            System.out.println("writing the bitstring: " + writeBitString + "decimal value: "
+                    + Integer.parseInt(writeBitString, 2));
+            System.out.println("length: " + writeBitString.length());
             int value = Integer.parseInt(writeBitString, 2);
 
             outBits.writeBits(writeBitString.length(),
                     value);
             temporaryVal += writeBitString;
             inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
+            System.out.println("inbits is " + inBits);
         }
 
-        String stringAlph = Integer.toString(IHuffConstants.ALPH_SIZE);
+        String stringAlph = String.valueOf(IHuffConstants.ALPH_SIZE);
 
         // 5. Write PSEUDO_EOF code
+        System.out.println("map: " + compressionHuffMap);
         String peof = compressionHuffMap.get(stringAlph);
-        outBits.writeBits(String.valueOf(peof).length(), Integer.parseInt(peof, 2));
+        temporaryVal += peof;
+        System.out.println("peof is " + temporaryVal + peof.length() + " int " + Integer.parseInt(peof, 2));
 
-        outBits.close();
-        inBitStream.close();
+        outBits.writeBits(4, 4);
+
+        // outBits.close();
+        // inBitStream.close();
+
         return bitsWritten;
     }
 
@@ -219,7 +228,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             decompressQueue.enqueue(new TreeNode(ALPH_SIZE, 1));
             decompressedTree = new HuffmanTree<>(decompressQueue);
 
-        } else if (headerFormat == STORE_TREE) { // STF
+        } else { // STF
             int treeSize = inputStream.readBits(BITS_PER_INT);
             treeSize = binaryToDecimal(treeSize);
 
@@ -228,9 +237,26 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
             decompressedTree = new HuffmanTree<>(treeData);
         }
+        String newPEOF = decompressedTree.getHuffManCodes().get(String.valueOf(ALPH_SIZE));
+        int inBits = 0;
+        StringBuilder currentValue = new StringBuilder();
+        TreeNode traversalNode = decompressedTree.getRoot();
 
         // read the huffman codes
-        while (true) {
+        while (inBits != -1 && !currentValue.toString().equals(newPEOF)) {
+            inBits = inputStream.readBits(1);
+            if (inBits == 1) {
+                traversalNode = traversalNode.getRight();
+            } else {
+                traversalNode = traversalNode.getLeft();
+            }
+
+            if (traversalNode.isLeaf() && traversalNode.getValue() != Integer.parseInt(newPEOF, 2)) {
+                outputStream.writeBits(BITS_PER_WORD, traversalNode.getValue());
+                // increment bits written
+                traversalNode = decompressedTree.getRoot();
+            }
+
             // read next bit
             // bitsRead +=
             // see where we are
@@ -242,8 +268,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
 
         // generate the unhf based on the huffman codes and the tree, using outputStream
-        inputStream.close();
-        outputStream.close();
+        // inputStream.close();
+        // outputStream.close();
         return bitsRead;
     }
 
