@@ -1,18 +1,19 @@
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.io.IOException;
 
 public class HuffmanTree<E extends Comparable<? super E>> {
     private TreeNode root;
     private Map<String, String> huffManCodes;
     private Map<Integer, Integer> getFreqPerCode;
 
+
     // constructor for generating huffman tree with a priority queue
     public HuffmanTree(PriorityQueue314<TreeNode> pq) {
-        getFreqPerCode = new TreeMap<Integer, Integer>();
-        huffManCodes = new TreeMap<String, String>();
+        getFreqPerCode = new HashMap<>();
+        huffManCodes = new HashMap<>();
 
         ArrayList<Integer> list = new ArrayList<>();
         Iterator<TreeNode> it = pq.iterator();
@@ -73,8 +74,8 @@ public class HuffmanTree<E extends Comparable<? super E>> {
 
     // default constructor
     public HuffmanTree() {
-        huffManCodes = new TreeMap<>();
-        getFreqPerCode = new TreeMap<>();
+        huffManCodes = new HashMap<>();
+        getFreqPerCode = new HashMap<>();
     }
 
     // return the huffman code for a specific ascii value
@@ -117,9 +118,9 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return -1;
     }
 
-    // return a treemap of huffman codes, <ASCII, HUFF CODE>
-    public TreeMap<String, String> getHuffManCodes() {
-        return (TreeMap<String, String>) huffManCodes;
+    // return a hashmap of huffman codes, <ASCII, HUFF CODE>
+    public HashMap<String, String> getHuffManCodes() {
+        return (HashMap<String, String>) huffManCodes;
     }
 
     // preorder traversal to figure out size rep. and tree shape
@@ -179,7 +180,6 @@ public class HuffmanTree<E extends Comparable<? super E>> {
         return binary.toString();
     }
 
-    // get the root, which is technically the tree.
     public TreeNode getRoot() {
         return root;
     }
