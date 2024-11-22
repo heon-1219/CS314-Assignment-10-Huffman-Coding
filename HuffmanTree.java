@@ -39,35 +39,38 @@ public class HuffmanTree<E extends Comparable<? super E>> {
 
     // constructor for generating huffman tree with a tree header
     public HuffmanTree(String treeData) throws IOException {
-        root = rebuildTree(treeData, new TreeNode(null, 0, null), false);
+        int[] hasPEOF = new int[1];
+        root = rebuildTree(treeData, new TreeNode(0, 0), hasPEOF, new int[1]);
+        if (hasPEOF[0] == 0) {
+
+            throw new IOException("Error reading compressed file. \n" +
+                    "unexpected end of input. No PSEUDO_EOF character.");
+        }
     }
 
     // recursive helper method for rebuilding the tree with tree header
-    private TreeNode rebuildTree(String treeData, TreeNode node, boolean hasEOF)
-            throws IOException {
-        int bit = Integer.parseInt(treeData.substring(0, 1));
-        treeData = treeData.substring(1);
+    private TreeNode rebuildTree(String treeData, TreeNode node, int[] hasEOF, int[] index)
+    {
+        int bit = Integer.parseInt(treeData.substring(index[0], index[0] + 1));
+        index[0]++;
+       // treeData = new StringBuilder(treeData.substring(1));
 
         if (bit == 0) {
             // internal node
             node = new TreeNode(-1, 1);
-            node.setLeft(rebuildTree(treeData, node, hasEOF));
-            node.setRight(rebuildTree(treeData, node, hasEOF));
-        } else if (bit == 1) {
+            node.setLeft(rebuildTree(treeData, node.getLeft(), hasEOF, index));
+            node.setRight(rebuildTree(treeData, node.getRight(), hasEOF, index));
+        } else {
             // turn the binary formatted value into decimal. Now index for huffman.
             int binaryValue = IHuffConstants.BITS_PER_WORD + 1;
-            int value = Integer.parseInt(treeData.substring(0, binaryValue), 2);
+            int value = Integer.parseInt(treeData.substring(index[0], index[0] + binaryValue), 2);
+            index[0] += binaryValue;
 
             // check if PSEUDO_EOF value exists
             if (value == IHuffConstants.ALPH_SIZE) {
-                hasEOF = true;
+                hasEOF[0]++;
             }
             return new TreeNode(value, 1);
-        }
-
-        if (hasEOF == false) {
-            throw new IOException("Error reading compressed file. \n" +
-                    "unexpected end of input. No PSEUDO_EOF character.");
         }
         return node;
     }
