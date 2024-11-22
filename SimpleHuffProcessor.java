@@ -152,32 +152,23 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // 4. The actual compressed data
         while (inBits != -1) {
             String writeBitString = compressionHuffMap.get(String.valueOf(inBits));
-            System.out.println("character just read: " + (char) inBits);
-            System.out.println("writing the bitstring: " + writeBitString + "decimal value: "
-                    + Integer.parseInt(writeBitString, 2));
-            System.out.println("length: " + writeBitString.length());
             int value = Integer.parseInt(writeBitString, 2);
 
             outBits.writeBits(writeBitString.length(),
                     value);
             temporaryVal += writeBitString;
             inBits = inBitStream.readBits(IHuffConstants.BITS_PER_WORD);
-            System.out.println("inbits is " + inBits);
         }
 
         String stringAlph = String.valueOf(IHuffConstants.ALPH_SIZE);
 
         // 5. Write PSEUDO_EOF code
-        System.out.println("map: " + compressionHuffMap);
         String peof = compressionHuffMap.get(stringAlph);
         temporaryVal += peof;
-        System.out.println("peof is " + temporaryVal + peof.length() + " int " + Integer.parseInt(peof, 2));
+        outBits.writeBits(peof.length(), Integer.parseInt(peof, 2));
 
-        outBits.writeBits(4, 4);
-
-        // outBits.close();
-        // inBitStream.close();
-
+        outBits.close();
+        inBitStream.close();
         return bitsWritten;
     }
 
@@ -258,10 +249,12 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             }
         }
 
+        inputStream.close();
+        outputStream.close();
         return bitsRead;
     }
 
-    // convert binary to decimal
+    // convert binary to decimal. Required for tree size
     private int binaryToDecimal(int binary) {
         int decimal = 0;
         int base = 1;
